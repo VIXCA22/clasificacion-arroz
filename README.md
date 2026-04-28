@@ -46,7 +46,13 @@ dataset.csv
 
 Ejemplo de matriz binaria (imagen procesada):
 
-![Matriz binaria](reports/matriz_binaria_128x128.png)
+### Contaminacion positiva
+
+![Matriz positiva](reports/matriz_positiva_128x128.png)
+
+### Contaminacion negativa
+
+![Matriz negativa](reports/matriz_negativa_128x128.png)
 
 ---
 
