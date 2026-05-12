@@ -1,110 +1,159 @@
-# Clasificación de contaminación en una línea de producción simulada
+# Clasificacion de contaminacion en una linea de produccion simulada
 
-## Descripción
+## Descripcion
 
-Este proyecto implementa un sistema de clasificación de imágenes para detectar la presencia de contaminaciones (granos de arroz) en una línea de producción simulada, utilizando técnicas de aprendizaje automático clásico.
+Este proyecto implementa un sistema de clasificacion de imagenes para detectar la presencia de contaminaciones o granos de arroz en una linea de produccion simulada, utilizando tecnicas de aprendizaje automatico clasico.
 
-El enfoque corresponde a un problema de **clasificación supervisada**, donde cada imagen es transformada a una representación binaria y utilizada para entrenar modelos.
+El enfoque corresponde a un problema de clasificacion supervisada. Cada imagen se transforma a una representacion binaria de 128x128 pixeles y luego se usa para entrenar y evaluar modelos.
 
 ---
 
-## Metodología
+## Metodologia
 
 El proceso seguido fue:
 
-1. Recolección de imágenes (positivas y negativas)
+1. Recoleccion de imagenes positivas y negativas.
 2. Preprocesamiento:
-   - Escala de grises
-   - Redimensionamiento a 128×128
-   - Binarización (Otsu)
-3. Conversión a vectores (16384 características)
-4. Construcción del dataset (CSV)
-5. Entrenamiento de modelos
-6. Evaluación
-7. Exportación del modelo
+   - Escala de grises.
+   - Redimensionamiento a 128x128.
+   - Binarizacion con Otsu.
+3. Conversion a vectores de 16384 caracteristicas.
+4. Construccion del dataset CSV.
+5. Normalizacion automatica de fondo.
+6. Entrenamiento de modelos clasicos.
+7. Validacion cruzada entre datasets.
+8. Exportacion del modelo final en formato `.joblib`.
 
 ---
 
-## Dataset
+## Datasets usados
 
-El dataset está compuesto por imágenes transformadas a vectores binarios.
+Se utilizaron cuatro matrices binarias:
 
-Cada fila contiene:
+| Dataset | Origen | Muestras | Clases |
+|---|---|---:|---|
+| `mi_dataset` | Generado con `codigo_unificado.py` | 30 | 15 clase 0 / 15 clase 1 |
+| `dataset_descargas` | `dataset.csv` externo | 30 | 15 clase 0 / 15 clase 1 |
+| `dataset_C26797` | `dataset_C26797.csv` externo | 30 | 15 clase 0 / 15 clase 1 |
+| `matriz_final` | `matriz_final.csv` externo | 30 | 15 clase 0 / 15 clase 1 |
 
-- 16384 valores (imagen 128×128)
-- 1 etiqueta:
-  - 1 ? presencia de arroz
-  - 0 ? ausencia de arroz
+En total se trabajaron 120 muestras balanceadas:
 
-Archivo generado:
-
-dataset.csv
-
----
-
-## Ejemplo de representación
-
-Ejemplo de matriz binaria (imagen procesada):
-
-### Contaminacion positiva
-
-![Matriz positiva](reports/matriz_positiva_128x128.png)
-
-### Contaminacion negativa
-
-![Matriz negativa](reports/matriz_negativa_128x128.png)
+- 60 muestras clase `0`.
+- 60 muestras clase `1`.
 
 ---
 
-## Modelos utilizados
+## Normalizacion aplicada
+
+Durante el diagnostico se encontro que `matriz_final.csv` tenia una representacion distinta: la mayoria de sus imagenes venian con fondo negro, mientras que los otros datasets tenian fondo blanco.
+
+Para corregir esto se agrego una normalizacion automatica:
+
+- Si una fila tiene fondo mayormente oscuro, se invierte.
+- Asi todos los datasets quedan con una convencion similar de fondo blanco.
+
+En la ultima ejecucion se detectaron e invirtieron 29 filas de `matriz_final.csv`.
+
+El script tambien genera archivos de diagnostico:
+
+```text
+diagnostico_muestras_datasets.png
+diagnostico_estadisticas_datasets.csv
+```
+
+---
+
+## Validacion entre datasets
+
+Para medir generalizacion real se uso una validacion cruzada entre datasets con el metodo de dejar un dataset completo como prueba:
+
+1. Se entrena con tres datasets.
+2. Se prueba contra el dataset restante.
+3. Se repite el proceso dejando fuera cada dataset.
+4. Se promedia el rendimiento.
+
+Este metodo es mas fuerte que dividir aleatoriamente un solo dataset, porque permite medir si el modelo funciona con matrices generadas por otras fuentes.
+
+---
+
+## Modelos evaluados
 
 Se evaluaron los siguientes modelos:
 
-- Árbol de decisión
-- Naive Bayes
-- K-Nearest Neighbors (KNN)
-- Support Vector Machine (SVM)
-
-El mejor modelo se selecciona según el rendimiento en el conjunto de prueba.
+- Arbol de decision.
+- Naive Bayes.
+- K-Nearest Neighbors (KNN).
+- Support Vector Machine (SVM).
 
 ---
 
-## Evaluación
+## Resultados finales
 
-Se utilizaron:
+Despues de aplicar la normalizacion de fondo, los resultados de generalizacion entre datasets fueron:
 
-- Accuracy
-- Precision, Recall y F1-score
-- Matriz de confusión
+| Modelo | Accuracy promedio entre datasets |
+|---|---:|
+| Arbol de decision | `0.5750 +/- 0.1689` |
+| Naive Bayes | `0.5083 +/- 0.0144` |
+| KNN | `0.5750 +/- 0.1115` |
+| SVM | `0.7000 +/- 0.2014` |
 
-Esto permite evaluar el desempeño del clasificador en términos de aciertos y errores.
+El mejor algoritmo fue SVM.
+
+Hiperparametros finales:
+
+```text
+C = 0.1
+kernel = rbf
+```
 
 ---
 
 ## Modelo final
 
-El modelo entrenado se exporta en formato:
+El modelo final se reentreno usando las 120 muestras disponibles y se exporto como:
 
+```text
 C09331_Kenneth_VizcainoJimenez.joblib
-
-Este archivo permite realizar inferencia sobre nuevas imágenes.
+```
 
 ---
 
-## Ejecución
+## Ejecucion
 
 Instalar dependencias:
 
+```bash
 pip install -r requirements.txt
+```
 
 Ejecutar:
 
+```bash
 python codigo_unificado.py
+```
+
+En Windows, usando el entorno virtual local:
+
+```powershell
+.\.venv\Scripts\python.exe codigo_unificado.py
+```
 
 ---
 
-## Conclusión
+## Conclusion
 
-El modelo logra identificar patrones en las imágenes binarizadas, permitiendo clasificar correctamente la presencia de contaminaciones en la mayoría de los casos.
+La normalizacion del fondo mejoro la generalizacion entre datasets. Antes de esta correccion, el mejor resultado estaba cerca de azar. Despues de normalizar matrices con fondo oscuro, SVM alcanzo un promedio de `0.7000 +/- 0.2014`.
 
-Sin embargo, su desempeño depende de condiciones como iluminación, fondo y calidad de imagen.
+Aun asi, algunos datasets externos siguen siendo dificiles, especialmente `dataset_descargas` y `dataset_C26797`. Esto sugiere diferencias de ruido, binarizacion, iluminacion o estilo visual.
+
+La siguiente mejora recomendada es extraer caracteristicas mas robustas en lugar de usar solamente los 16384 pixeles crudos, por ejemplo:
+
+- Area ocupada.
+- Centroide.
+- Bounding box.
+- Cantidad de componentes conectados.
+- Distribucion por zonas.
+
+Ultima actualizacion: 2026-05-12.
